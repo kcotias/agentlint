@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C00"/>
+      <stop offset="100%" style="stop-color:#E06600"/>
+    </linearGradient>
+    <linearGradient id="doc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#F0F0F0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="4" y="4" width="248" height="248" rx="48" ry="48" fill="url(#bg)"/>
+
+  <!-- Document shape -->
+  <path d="M 72 42 L 152 42 L 192 82 L 192 206 Q 192 214 184 214 L 72 214 Q 64 214 64 206 L 64 50 Q 64 42 72 42 Z" fill="url(#doc)" opacity="0.95"/>
+
+  <!-- Document fold -->
+  <path d="M 152 42 L 152 74 Q 152 82 160 82 L 192 82 Z" fill="#E8E8E8"/>
+
+  <!-- Text lines on document -->
+  <rect x="84" y="100" width="56" height="6" rx="3" fill="#FF8C00" opacity="0.5"/>
+  <rect x="84" y="116" width="88" height="6" rx="3" fill="#CCCCCC"/>
+  <rect x="84" y="132" width="72" height="6" rx="3" fill="#CCCCCC"/>
+  <rect x="84" y="148" width="80" height="6" rx="3" fill="#CCCCCC"/>
+  <rect x="84" y="164" width="60" height="6" rx="3" fill="#CCCCCC"/>
+
+  <!-- Checkmark badge circle -->
+  <circle cx="180" cy="186" r="36" fill="#1DB954" stroke="#E06600" stroke-width="4"/>
+
+  <!-- Checkmark -->
+  <polyline points="160,186 174,200 200,172" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

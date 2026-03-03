@@ -1,0 +1,112 @@
+{
+  "name": "agentlint",
+  "displayName": "AgentLint",
+  "description": "Lint CLAUDE.md and agent instruction files for prompt quality issues",
+  "version": "0.1.0",
+  "publisher": "agentlint",
+  "icon": "images/icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentlint/agentlint"
+  },
+  "homepage": "https://github.com/agentlint/agentlint#readme",
+  "bugs": {
+    "url": "https://github.com/agentlint/agentlint/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude-md",
+    "cursor",
+    "cursorrules",
+    "copilot",
+    "agent",
+    "ai",
+    "lint",
+    "linter",
+    "prompt",
+    "instructions"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown",
+    "workspaceContains:**/CLAUDE.md",
+    "workspaceContains:**/.cursorrules",
+    "workspaceContains:**/SKILL.md",
+    "workspaceContains:**/AGENTS.md"
+  ],
+  "main": "./out/extension.js",
+  "bin": {
+    "agentlint": "./out/cli/index.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentlint.analyzeNow",
+        "title": "AgentLint: Analyze Current File"
+      },
+      {
+        "command": "agentlint.aiReadiness",
+        "title": "AgentLint: AI-Readiness Report"
+      },
+      {
+        "command": "agentlint.createClaudeMd",
+        "title": "AgentLint: Create CLAUDE.md from Template"
+      },
+      {
+        "command": "agentlint.createSkillMd",
+        "title": "AgentLint: Create SKILL.md from Template"
+      },
+      {
+        "command": "agentlint.createClaudeRules",
+        "title": "AgentLint: Create .claude/rules/ File"
+      },
+      {
+        "command": "agentlint.migrateToClaudeMd",
+        "title": "AgentLint: Migrate to CLAUDE.md"
+      },
+      {
+        "command": "agentlint.exportContext",
+        "title": "AgentLint: Export Agent Context"
+      }
+    ],
+    "configuration": {
+      "title": "AgentLint",
+      "properties": {
+        "agentlint.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API key for Claude. Falls back to ANTHROPIC_API_KEY env var."
+        },
+        "agentlint.model": {
+          "type": "string",
+          "default": "claude-sonnet-4-20250514",
+          "description": "Claude model to use for analysis."
+        },
+        "agentlint.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to .agentlint.json config file. Relative to workspace root. If empty, searches workspace root for .agentlint.json or agentlint.config.json."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}

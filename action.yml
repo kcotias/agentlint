@@ -1,0 +1,89 @@
+name: 'AgentLint'
+description: 'Lint your AI agent instruction files (CLAUDE.md, .cursorrules, SKILL.md, AGENTS.md) in CI'
+author: 'AgentLint'
+
+branding:
+  icon: 'check-circle'
+  color: 'orange'
+
+inputs:
+  path:
+    description: 'Path to scan (default: repository root)'
+    required: false
+    default: '.'
+  strict:
+    description: 'Treat warnings as errors'
+    required: false
+    default: 'false'
+  score:
+    description: 'Show readiness score in output'
+    required: false
+    default: 'true'
+  config:
+    description: 'Path to .agentlint.json config file'
+    required: false
+    default: ''
+  fail-on-warning:
+    description: 'Fail the workflow if warnings are found'
+    required: false
+    default: 'false'
+  annotate:
+    description: 'Add inline PR annotations for issues'
+    required: false
+    default: 'true'
+
+outputs:
+  score:
+    description: 'The readiness score (0-100)'
+    value: ${{ steps.lint.outputs.score }}
+  errors:
+    description: 'Number of errors found'
+    value: ${{ steps.lint.outputs.errors }}
+  warnings:
+    description: 'Number of warnings found'
+    value: ${{ steps.lint.outputs.warnings }}
+  total:
+    description: 'Total number of issues found'
+    value: ${{ steps.lint.outputs.total }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run AgentLint
+      id: lint
+      shell: bash
+      run: |
+        # Build the agentlint command with flags
+        ARGS="${{ inputs.path }}"
+
+        if [ "${{ inputs.annotate }}" = "false" ]; then
+          ARGS="$ARGS --format stylish"
+        else
+          ARGS="$ARGS --format github"
+        fi
+
+        if [ "${{ inputs.strict }}" = "true" ] || [ "${{ inputs.fail-on-warning }}" = "true" ]; then
+          ARGS="$ARGS --strict"
+        fi
+
+        if [ "${{ inputs.score }}" = "true" ]; then
+          ARGS="$ARGS --score"
+        fi
+
+        if [ -n "${{ inputs.config }}" ]; then
+          ARGS="$ARGS --config ${{ inputs.config }}"
+        fi
+
+        # Run agentlint — allow non-zero exit so we can handle it
+        set +e
+        npx agentlint@latest $ARGS
+        EXIT_CODE=$?
+        set -e
+
+        # Exit with the appropriate code
+        exit $EXIT_CODE

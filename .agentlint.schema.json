@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentLint Configuration",
+  "description": "Configuration for AgentLint — a linter for AI agent instruction files (CLAUDE.md, .cursorrules, SKILL.md, etc.)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for IDE autocompletion."
+    },
+    "rules": {
+      "type": "object",
+      "description": "Per-rule severity overrides. Use rule IDs as keys. \"off\" or false disables the rule.",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": ["error", "warning", "info", "off"],
+            "description": "Severity level, or \"off\" to disable the rule."
+          },
+          {
+            "type": "boolean",
+            "enum": [false],
+            "description": "false is an alias for \"off\"."
+          }
+        ]
+      },
+      "properties": {
+        "FILE_TOO_LONG": { "$ref": "#/definitions/severity" },
+        "MISSING_COMMANDS": { "$ref": "#/definitions/severity" },
+        "MISSING_NEGATIVE_CONSTRAINTS": { "$ref": "#/definitions/severity" },
+        "DISCOVERABLE_INFO": { "$ref": "#/definitions/severity" },
+        "HEDGING_LANGUAGE": { "$ref": "#/definitions/severity" },
+        "VAGUE_INSTRUCTION": { "$ref": "#/definitions/severity" },
+        "PROSE_PARAGRAPH": { "$ref": "#/definitions/severity" },
+        "SENSITIVE_DATA": { "$ref": "#/definitions/severity" },
+        "SKILL_MISSING_FRONTMATTER": { "$ref": "#/definitions/severity" },
+        "SKILL_MISSING_NAME": { "$ref": "#/definitions/severity" },
+        "SKILL_INVALID_NAME": { "$ref": "#/definitions/severity" },
+        "SKILL_MISSING_DESCRIPTION": { "$ref": "#/definitions/severity" },
+        "SKILL_DESCRIPTION_TOO_LONG": { "$ref": "#/definitions/severity" },
+        "SKILL_WEAK_DESCRIPTION": { "$ref": "#/definitions/severity" },
+        "SKILL_TOKEN_BUDGET": { "$ref": "#/definitions/severity" },
+        "IMPORT_PATH_NOT_FOUND": { "$ref": "#/definitions/severity" },
+        "CIRCULAR_REFERENCE": { "$ref": "#/definitions/severity" },
+        "DUPLICATE_IMPORT": { "$ref": "#/definitions/severity" },
+        "XML_TAG_UNBALANCED": { "$ref": "#/definitions/severity" },
+        "XML_TAG_NESTING_ERROR": { "$ref": "#/definitions/severity" },
+        "BROKEN_MARKDOWN_LINK": { "$ref": "#/definitions/severity" },
+        "RELATIVE_LINK_OUTSIDE_REPO": { "$ref": "#/definitions/severity" },
+        "README_DUPLICATION": { "$ref": "#/definitions/severity" },
+        "NEGATIVE_ONLY_INSTRUCTIONS": { "$ref": "#/definitions/severity" },
+        "LOST_IN_THE_MIDDLE": { "$ref": "#/definitions/severity" },
+        "AMBIGUOUS_INSTRUCTION": { "$ref": "#/definitions/severity" },
+        "WEAK_LANGUAGE_IN_CRITICAL": { "$ref": "#/definitions/severity" },
+        "REDUNDANT_GENERIC_INSTRUCTION": { "$ref": "#/definitions/severity" },
+        "RULES_FILE_MISSING_GLOB": { "$ref": "#/definitions/severity" },
+        "RULES_FILE_INVALID_GLOB": { "$ref": "#/definitions/severity" },
+        "UNKNOWN_FRONTMATTER_KEY": { "$ref": "#/definitions/severity" },
+        "CHAIN_OF_THOUGHT_SIMPLE_TASK": { "$ref": "#/definitions/severity" },
+        "HOOK_MISSING_EVENT": { "$ref": "#/definitions/severity" },
+        "HOOK_DANGEROUS_COMMAND": { "$ref": "#/definitions/severity" },
+        "HOOK_MISSING_TIMEOUT": { "$ref": "#/definitions/severity" },
+        "HOOK_INVALID_MATCHER": { "$ref": "#/definitions/severity" },
+        "AGENT_MISSING_ROLE": { "$ref": "#/definitions/severity" },
+        "AGENT_CONFLICTING_SCOPE": { "$ref": "#/definitions/severity" },
+        "AGENT_MISSING_CONSTRAINTS": { "$ref": "#/definitions/severity" },
+        "MCP_MISSING_AUTH": { "$ref": "#/definitions/severity" },
+        "MCP_HARDCODED_URL": { "$ref": "#/definitions/severity" },
+        "MCP_MISSING_ERROR_HANDLING": { "$ref": "#/definitions/severity" },
+        "CURSOR_RULES_DEPRECATED_FORMAT": { "$ref": "#/definitions/severity" },
+        "CURSOR_MDC_MISSING_FRONTMATTER": { "$ref": "#/definitions/severity" },
+        "CURSOR_CONFLICTING_WITH_CLAUDE": { "$ref": "#/definitions/severity" },
+        "COPILOT_WRONG_LOCATION": { "$ref": "#/definitions/severity" },
+        "COPILOT_TOO_LONG": { "$ref": "#/definitions/severity" },
+        "COPILOT_CLAUDE_SPECIFIC_INSTRUCTIONS": { "$ref": "#/definitions/severity" }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "description": "Per-category overrides. \"off\" disables all rules in that category.",
+      "additionalProperties": {
+        "$ref": "#/definitions/severity"
+      },
+      "properties": {
+        "structure": { "$ref": "#/definitions/severity", "description": "File structure, sections, organization rules." },
+        "language": { "$ref": "#/definitions/severity", "description": "Language quality, clarity, precision rules." },
+        "security": { "$ref": "#/definitions/severity", "description": "Sensitive data, credentials rules." },
+        "skill": { "$ref": "#/definitions/severity", "description": "SKILL.md specific rules." },
+        "imports": { "$ref": "#/definitions/severity", "description": "Import/reference validation rules." },
+        "xml": { "$ref": "#/definitions/severity", "description": "XML/tag validation rules." },
+        "links": { "$ref": "#/definitions/severity", "description": "Link validation rules." },
+        "prompt": { "$ref": "#/definitions/severity", "description": "Prompt engineering best practices rules." },
+        "hooks": { "$ref": "#/definitions/severity", "description": "Hook configuration validation rules." },
+        "agents": { "$ref": "#/definitions/severity", "description": "Agent/subagent configuration rules." },
+        "mcp": { "$ref": "#/definitions/severity", "description": "MCP server configuration rules." },
+        "cursor": { "$ref": "#/definitions/severity", "description": "Cursor-specific rules." },
+        "copilot": { "$ref": "#/definitions/severity", "description": "Copilot-specific rules." }
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "description": "File-specific overrides. Each entry matches files by path pattern and overrides rule severities.",
+      "items": {
+        "type": "object",
+        "required": ["files"],
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "description": "File path patterns to match (substring match against absolute file path).",
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ]
+          },
+          "rules": {
+            "type": "object",
+            "description": "Per-rule severity overrides for matched files.",
+            "additionalProperties": {
+              "$ref": "#/definitions/severity"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "severity": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["error", "warning", "info", "off"],
+          "description": "Severity level, or \"off\" to disable."
+        },
+        {
+          "type": "boolean",
+          "enum": [false],
+          "description": "false is an alias for \"off\"."
+        }
+      ]
+    }
+  }
+}

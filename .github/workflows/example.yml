@@ -1,0 +1,56 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Example: Lint AI agent instruction files with AgentLint
+#
+# This workflow runs AgentLint on every push or PR that touches agent
+# instruction files. It produces inline annotations on PRs and a summary
+# table in the Actions job log.
+#
+# Two approaches are shown below — pick the one that suits you.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Lint Agent Instructions
+
+on:
+  push:
+    paths:
+      - 'CLAUDE.md'
+      - '.claude/**'
+      - 'SKILL.md'
+      - 'AGENTS.md'
+      - '.cursorrules'
+      - '.cursor/rules/**'
+      - '.github/copilot-instructions.md'
+  pull_request:
+    paths:
+      - 'CLAUDE.md'
+      - '.claude/**'
+      - 'SKILL.md'
+      - 'AGENTS.md'
+      - '.cursorrules'
+      - '.cursor/rules/**'
+      - '.github/copilot-instructions.md'
+
+jobs:
+  # ── Option A: Use the AgentLint composite action ─────────────────────────
+  # This is the recommended approach. It handles setup and formatting for you.
+  agentlint-action:
+    name: AgentLint (Action)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: agentlint/agentlint@v1
+        with:
+          strict: false
+          score: true
+
+  # ── Option B: Run npx directly (simplest possible) ──────────────────────
+  # No action required — just npx. Works in any CI environment.
+  agentlint-npx:
+    name: AgentLint (npx)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npx agentlint@latest --format github --score
