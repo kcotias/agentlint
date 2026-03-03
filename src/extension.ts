@@ -39,6 +39,11 @@ function detectAgentFile(filePath: string): AgentFileInfo | undefined {
     return { type: 'claude-rules', label: '.claude/rules/' };
   }
 
+  // .claude/commands/*.md (slash commands)
+  if (dirName === 'commands' && parentDir === '.claude' && lowerBasename.endsWith('.md')) {
+    return { type: 'claude-commands', label: '.claude/commands/' };
+  }
+
   // AGENTS.md
   if (lowerBasename === 'agents.md') {
     return { type: 'agents-md', label: 'AGENTS.md' };

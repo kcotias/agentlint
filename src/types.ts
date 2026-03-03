@@ -21,6 +21,7 @@ export type AgentFileType =
   | 'claude-md'
   | 'claude-local-md'
   | 'claude-rules'
+  | 'claude-commands'
   | 'agents-md'
   | 'cursorrules'
   | 'copilot-instructions'

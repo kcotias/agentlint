@@ -38,6 +38,11 @@ export function detectFileType(filePath: string): AgentFileType | null {
     return 'claude-rules';
   }
 
+  // .claude/commands/*.md (slash commands)
+  if (dirName === 'commands' && parentDir === '.claude' && lowerBasename.endsWith('.md')) {
+    return 'claude-commands';
+  }
+
   // AGENTS.md
   if (lowerBasename === 'agents.md') {
     return 'agents-md';
@@ -146,6 +151,21 @@ export function findAgentFiles(rootDir: string): DiscoveredFile[] {
     for (const entry of readDir(claudeRulesDir)) {
       if (entry.endsWith('.md')) {
         const abs = path.join(claudeRulesDir, entry);
+        const type = detectFileType(abs);
+        if (type && !seen.has(abs)) {
+          results.push({ path: abs, type });
+          seen.add(abs);
+        }
+      }
+    }
+  }
+
+  // .claude/commands/*.md
+  const claudeCommandsDir = path.join(rootDir, '.claude', 'commands');
+  if (dirExists(claudeCommandsDir)) {
+    for (const entry of readDir(claudeCommandsDir)) {
+      if (entry.endsWith('.md')) {
+        const abs = path.join(claudeCommandsDir, entry);
         const type = detectFileType(abs);
         if (type && !seen.has(abs)) {
           results.push({ path: abs, type });
