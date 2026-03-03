@@ -1,7 +1,21 @@
-import Anthropic from '@anthropic-ai/sdk';
 import * as vscode from 'vscode';
 import { AgentFileType, AnalysisResult, PromptIssue } from './types';
 import { buildMetaPrompt } from './metaPrompt';
+
+// Lazy-load the Anthropic SDK so the extension activates even when
+// node_modules aren't bundled (e.g., VSIX without a bundler).
+let _Anthropic: typeof import('@anthropic-ai/sdk').default | undefined;
+function getAnthropicSDK(): typeof import('@anthropic-ai/sdk').default | undefined {
+  if (!_Anthropic) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      _Anthropic = require('@anthropic-ai/sdk').default ?? require('@anthropic-ai/sdk');
+    } catch {
+      // SDK not available — deep analysis disabled
+    }
+  }
+  return _Anthropic;
+}
 
 interface CacheEntry {
   content: string;
@@ -75,6 +89,12 @@ export async function analyzeDocument(
     return undefined;
   }
 
+  const Anthropic = getAnthropicSDK();
+  if (!Anthropic) {
+    log.appendLine('[info] Anthropic SDK not available — deep analysis disabled. Local rules still active.');
+    return undefined;
+  }
+
   const model = getModel();
   const prompt = buildMetaPrompt(content, fileType);
 
@@ -84,7 +104,7 @@ export async function analyzeDocument(
     const abortController = new AbortController();
     const timeout = setTimeout(() => abortController.abort(), 30_000);
 
-    let response: Anthropic.Message;
+    let response: any;
     try {
       response = await client.messages.create(
         {
@@ -98,7 +118,7 @@ export async function analyzeDocument(
       clearTimeout(timeout);
     }
 
-    const textBlock = response.content.find((b) => b.type === 'text');
+    const textBlock = response.content.find((b: any) => b.type === 'text');
     if (!textBlock || textBlock.type !== 'text') {
       log.appendLine('[error] No text content in API response');
       return undefined;
