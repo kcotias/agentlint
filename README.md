@@ -197,6 +197,17 @@ AgentLint's rules aren't opinions — they're based on documented findings:
 - **RFC 2119 keyword effectiveness** — MUST/NEVER/ALWAYS followed more reliably than hedging language
 - **ETH Zurich study** — auto-generated boilerplate decreases success rates by 2-3%
 
+## Early Development — Feedback Welcome
+
+AgentLint is still in early development and evolving fast. If you try it out, we'd love to hear from you — what worked, what didn't, what you'd want next. Every piece of feedback helps shape where this goes.
+
+- **Leave a review** on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=agentlint.agentlint)
+- **Star the repo** on [GitHub](https://github.com/kcotias/agentlint) — it helps more people find it
+- **Follow [@kcotias](https://github.com/kcotias)** for updates on new features and releases
+- **Open an issue** if you hit a bug or have an idea — [github.com/kcotias/agentlint/issues](https://github.com/kcotias/agentlint/issues)
+
+Thanks for being an early adopter.
+
 ## License
 
 MIT
