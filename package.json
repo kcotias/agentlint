@@ -2,7 +2,7 @@
   "name": "agentlint",
   "displayName": "AgentLint",
   "description": "Lint AI agent instruction files — 67 rules, cost analysis, readiness scoring. Find broken rules AND cut token waste. Works with Claude, Cursor, Copilot.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "agentlint",
   "icon": "images/icon.png",
   "license": "MIT",
