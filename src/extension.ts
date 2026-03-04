@@ -5,7 +5,7 @@ import { issuesToDiagnostics } from './diagnostics';
 import { runLocalRules } from './localRules';
 import { AgentLintCodeActionProvider } from './quickfix';
 import { createClaudeMdTemplate, createSkillMdTemplate, createClaudeRulesTemplate } from './templates';
-import { scanWorkspace, renderReportMarkdown } from './readinessScanner';
+import { scanWorkspace, renderReportMarkdown } from './readiness/vscodeScanner';
 import { migrateToClaudeMd } from './migration';
 import { exportAgentContext } from './contextExport';
 import { AgentFileType, AgentFileInfo } from './types';
@@ -367,7 +367,7 @@ export function activate(context: vscode.ExtensionContext): void {
         // Also show summary notification
         const emoji = report.score >= 80 ? '🟢' : report.score >= 50 ? '🟡' : report.score >= 20 ? '🟠' : '🔴';
         vscode.window.showInformationMessage(
-          `${emoji} AI-Readiness: ${report.score}/100 — L${report.maturityLevel} ${report.maturityLabel} — ${report.roadmap.length} steps to improve`
+          `${emoji} AI-Readiness: ${report.score}/100 — L${report.maturity.level} ${report.maturity.label} — ${report.roadmap.length} steps to improve`
         );
       }
     );

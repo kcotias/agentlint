@@ -1,8 +1,8 @@
 {
   "name": "agentlint",
   "displayName": "AgentLint",
-  "description": "Lint CLAUDE.md and agent instruction files for prompt quality issues",
-  "version": "0.1.0",
+  "description": "Lint AI agent instruction files — 67 rules, cost analysis, readiness scoring. Find broken rules AND cut token waste. Works with Claude, Cursor, Copilot.",
+  "version": "0.2.0",
   "publisher": "agentlint",
   "icon": "images/icon.png",
   "license": "MIT",

@@ -13,7 +13,7 @@ import * as fs from 'fs';
  * CLAUDE.md best-practices format with proper sections.
  */
 
-// ── Section detection (reused from readinessScanner, but format-agnostic) ────
+// ── Section detection (format-agnostic) ─────────────────────────────────────
 
 interface DetectedContent {
   projectContext: string[];

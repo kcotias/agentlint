@@ -8,6 +8,7 @@
  *   npx agentlint path/to/CLAUDE.md    Lint a specific file
  *   npx agentlint --fix                Auto-fix fixable issues
  *   npx agentlint --score              Show readiness score
+ *   npx agentlint --report             Full AI readiness report
  *   npx agentlint --strict             Treat warnings as errors
  *   npx agentlint --format json        JSON output for CI
  *   npx agentlint --format stylish     Pretty terminal output (default)
@@ -40,6 +41,8 @@ import {
   formatRuleList,
   computeSummary,
 } from './reporter';
+import { scanReadiness } from '../readiness/core';
+import { renderReportMarkdown } from '../readiness/renderer';
 
 // ── Argument parsing ─────────────────────────────────────────────────────────
 
@@ -52,6 +55,8 @@ interface CliOptions {
   fix: boolean;
   /** Show readiness score */
   score: boolean;
+  /** Show full AI readiness report */
+  report: boolean;
   /** Treat warnings as errors */
   strict: boolean;
   /** List all rules */
@@ -74,6 +79,7 @@ function parseArgs(argv: string[]): CliOptions {
     format: 'stylish',
     fix: false,
     score: false,
+    report: false,
     strict: false,
     listRules: false,
     config: '',
@@ -101,6 +107,9 @@ function parseArgs(argv: string[]): CliOptions {
         break;
       case '--score':
         opts.score = true;
+        break;
+      case '--report':
+        opts.report = true;
         break;
       case '--strict':
         opts.strict = true;
@@ -181,6 +190,7 @@ function printHelp(): void {
 
     --fix                 Apply auto-fixes for fixable issues
     --score               Show readiness score after linting
+    --report              Full AI readiness report (score, cost, roadmap)
     --strict              Treat warnings as errors (exit 1)
     --format <fmt>        Output format: stylish (default), json, github
     --config <path>       Path to config file (default: .agentlint.json in cwd)
@@ -320,7 +330,30 @@ function main(): void {
     process.exit(0);
   }
 
-  // Register all rules
+  // ── --report (runs before registerAllRules — core.ts handles its own registration) ─
+
+  if (opts.report) {
+    const rootDir = opts.targets.length > 0 ? path.resolve(cwd, opts.targets[0]) : cwd;
+    const discovered = findAgentFiles(rootDir);
+
+    if (discovered.length === 0) {
+      process.stdout.write('\n  No agent instruction files found. Nothing to report.\n\n');
+      process.exit(0);
+    }
+
+    const files = discovered.map((f) => ({
+      absPath: f.path,
+      relativePath: path.relative(rootDir, f.path),
+      type: f.type,
+    }));
+
+    const report = scanReadiness({ rootDir, files, hasApiKey: !!process.env.ANTHROPIC_API_KEY });
+    const markdown = renderReportMarkdown(report);
+    process.stdout.write(markdown);
+    process.exit(0);
+  }
+
+  // Register all rules (for lint mode, not report mode)
   registerAllRules();
 
   // ── --list-rules ─────────────────────────────────────────────────────────

@@ -1,46 +1,111 @@
 # AgentLint
 
-**Your AI agent only follows the instructions it actually understands.** AgentLint finds the ones it won't — vague rules, hedging language, bloated files, leaked secrets, conflicting constraints — and shows you exactly how to fix them.
+**Lint your AI agent instruction files. Find broken rules, cut token waste, and know exactly what you're spending.**
 
-The first linter built specifically for AI agent instruction files. Works in your editor, on every save, in CI, and from the command line.
+The first linter built specifically for AI agent instruction files. 67 rules catch vague language, security leaks, structural issues, and prompt anti-patterns — then cost analysis shows you exactly how much your context files cost per month and where to save. Works in VS Code and Cursor, across Claude Code, Cursor, and GitHub Copilot instruction files.
 
 ## The Problem
 
-You write a 300-line CLAUDE.md. Claude ignores half of it. You don't know which half.
+You write a 300-line CLAUDE.md. Claude ignores half of it. You don't know which half — but you're paying for all of it.
 
-Anthropic's research shows instruction adherence **degrades uniformly** beyond ~200 lines. Hedging language like "try to" and "consider" is treated as optional. Vague instructions waste token budget on things Claude already does by default. And a single leaked API key in your instruction file is one `git push` away from a production incident.
+Hedging language like "try to" is treated as optional. Vague instructions waste tokens on things the AI already does. Contradictory rules cancel each other out. Exposed API keys sit in plain text. And bloated files degrade adherence for ALL your rules — not just the ones at the end. Meanwhile, every token in your always-loaded instruction files is sent with **every single message**, costing **$30-50/month per developer** in input tokens alone.
 
-You'd never ship code without a linter. Why are you shipping AI instructions without one?
+AgentLint catches the problems you can't see and quantifies the waste in dollars — so you get better AI behavior AND lower costs.
 
-## What It Does
+## What You Get
 
-AgentLint runs **two phases of analysis** on your agent instruction files:
+### 67 Lint Rules — Catch What You Can't See
 
 **Phase 1 — Local Rules (free, instant, every save)**
-67 deterministic rules across 15 categories catch problems with zero API cost:
 
 | Category | Rules | What It Catches |
 |----------|-------|-----------------|
-| **structure** | 5 | File length limits, missing commands, missing constraints, discoverable info, tool-specific context limits |
-| **language** | 3 | Hedging language, vague instructions, dense prose blocks |
+| **structure** | 5 | File length, missing commands/constraints, discoverable info, context limits |
+| **language** | 3 | Hedging language, vague instructions, dense prose |
 | **security** | 1 | API keys, tokens, passwords, private keys |
-| **skill** | 10 | Frontmatter validation, name format, description quality, token budget, dangerous auto-invoke, triggers |
+| **skill** | 10 | Frontmatter, name format, description quality, token budget, triggers |
 | **imports** | 3 | Missing imports, circular references, unresolved paths |
-| **xml** | 3 | Malformed XML/HTML blocks, unclosed tags, entity encoding |
-| **links** | 3 | Broken relative links, external URLs in instructions, anchor references |
-| **prompt** | 5 | Contradictory instructions, repeated rules, instruction ordering, ambiguous scope, token-wasting patterns |
-| **hooks** | 4 | Hook configuration issues, missing error handling, unsafe commands, permission gaps |
-| **agents** | 4 | Multi-agent coordination issues, missing handoff protocols, role ambiguity, context sharing |
-| **mcp** | 5 | MCP server configuration, tool naming, schema validation, error handling, transport issues |
-| **cursor** | 5 | Cursor-specific rule formatting, MDC frontmatter, glob patterns, rule conflicts, deprecated patterns |
-| **copilot** | 3 | Copilot instruction format, scope issues, conflicting settings |
-| **crossPlatform** | 5 | Tool-specific syntax used across platforms, incompatible directives, migration hints |
-| **memory** | 8 | CLAUDE.local.md hygiene, secrets in local files, stale references, override conflicts, file length |
+| **xml** | 3 | Malformed XML/HTML, unclosed tags, entity encoding |
+| **links** | 3 | Broken links, external URLs, anchor references |
+| **prompt** | 5 | Contradictions, repeated rules, ordering, ambiguous scope, token waste |
+| **hooks** | 4 | Config issues, missing error handling, unsafe commands |
+| **agents** | 4 | Multi-agent coordination, handoff protocols, role ambiguity |
+| **mcp** | 5 | Server config, tool naming, schema validation, transport |
+| **cursor** | 5 | MDC frontmatter, glob patterns, rule conflicts, deprecated patterns |
+| **copilot** | 3 | Instruction format, scope issues, conflicting settings |
+| **crossPlatform** | 5 | Tool-specific syntax across platforms, migration hints |
+| **memory** | 8 | Local file hygiene, secrets, stale references, override conflicts |
 
-Most rules have **one-click quick-fixes** in VS Code — look for the lightbulb icon.
+Most rules have **one-click quick-fixes** in VS Code.
 
 **Phase 2 — Deep Analysis (optional, requires API key)**
-Claude reviews your instruction file for semantic issues that rules can't catch: conflicting instructions, redundant linting rules, stale file references, missing verification steps, instruction overload.
+Claude reviews your files for semantic issues rules can't catch: conflicting instructions, stale references, missing verification steps, instruction overload.
+
+### Cost Analysis — Know What You're Spending
+
+```
+> AgentLint: AI-Readiness Report
+
+## Executive Summary
+
+| Metric                    | Value                                    |
+|---------------------------|------------------------------------------|
+| AI Readiness Score        | 48/100 (Grade: D)                        |
+| Monthly Context Cost      | ~$37.78/developer                        |
+| Potential Monthly Savings | ~$8.12/developer (21% reduction)         |
+| Best Suited For           | Claude Code (4/10 features)              |
+
+## Token Budget & Cost Impact
+
+| Category         | Files | Tokens  | $/month |
+|------------------|-------|---------|---------|
+| Always loaded    | 2     | ~5,465  | $27.05  |
+| Conditional      | 4     | ~5,417  | ~$10.73 |
+| On-demand        | 3     | ~1,432  | ~$0.00  |
+
+### Potential Savings: ~$8.12/month ($97.44/year)
+
+| Optimization                          | Monthly Savings |
+|---------------------------------------|-----------------|
+| Move specialized content to Skills    | $4.02           |
+| Remove 18 discoverable info lines     | $2.48           |
+| Convert prose to bullets (12 blocks)  | $1.19           |
+| Remove 4 vague/redundant instructions | $0.43           |
+```
+
+Every file classified by how it's loaded (always, conditional, on-demand), with per-file $/month cost and concrete savings recommendations.
+
+### AI Tool Fit — Multi-Tool Aware
+
+AgentLint doesn't just lint Claude files. It scores your setup across all three major AI coding tools:
+
+```
+| Tool           | Configured | Score |
+|----------------|------------|-------|
+| Claude Code    | ████░░░░░░ | 4/10  |
+| Cursor         | ███        | 3/3   |
+| GitHub Copilot | █░         | 1/2   |
+```
+
+Detects which tool your codebase is best configured for and flags when you're "multi-tool ready."
+
+### Readiness Score & Maturity Roadmap
+
+**Score (0-100)** with letter grade, combining good-practice bonuses and issue penalties.
+
+**Maturity progression** from L0 to L6:
+
+| Level | Name | What It Means |
+|-------|------|---------------|
+| L0 | Unconfigured | No AI agent instruction files |
+| L1 | Foundation | Agent files exist with basic instructions |
+| L2 | Intentional | Uses RFC 2119 language (MUST/NEVER) for reliable compliance |
+| L3 | Organized | Multiple files split by concern, good section coverage |
+| L4 | Context-Aware | Path-scoped rules load contextually, reducing token waste |
+| L5 | Optimized | Comprehensive setup with hooks, MCP, full coverage |
+| L6 | Autonomous | Skills + plugins + dynamic loading for on-demand context |
+
+**Adoption roadmap** grouped by effort — Quick Wins, Medium Effort, Strategic — each with points recoverable and $/month savings.
 
 ## Supported Files
 
@@ -49,21 +114,30 @@ Claude reviews your instruction file for semantic issues that rules can't catch:
 | `CLAUDE.md` | Claude Code | Yes |
 | `CLAUDE.local.md` | Claude Code | Yes |
 | `.claude/rules/*.md` | Claude Code | Yes |
+| `.claude/commands/*.md` | Claude Code | Yes |
 | `SKILL.md` | Agent Skills | Yes |
-| `AGENTS.md` | Multi-agent | Yes |
+| `AGENTS.md` / `*.agent.md` | Multi-agent | Yes |
 | `.cursorrules` | Cursor | Yes |
 | `.cursor/rules/*.mdc` | Cursor | Yes |
 | `.github/copilot-instructions.md` | GitHub Copilot | Yes |
 
 ## Quick Start
 
-### VS Code / Cursor
+1. Install from the VS Code marketplace (search **"AgentLint"**)
+2. Open any supported file — diagnostics appear instantly with inline warnings and quick-fixes
+3. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) and explore:
 
-1. Install from the marketplace (search "AgentLint")
-2. Open any supported file — diagnostics appear instantly
-3. That's it. No configuration required for local rules.
+| Command | What It Does |
+|---------|-------------|
+| `AgentLint: AI-Readiness Report` | Full audit — score, cost analysis, savings, maturity level, and adoption roadmap |
+| `AgentLint: Analyze Current File` | Run deep analysis on the active file (requires API key) |
+| `AgentLint: Migrate to CLAUDE.md` | Convert `.cursorrules` / Copilot instructions into a structured `CLAUDE.md` |
+| `AgentLint: Export Agent Context` | See every instruction file your AI agent loads, in order, with token counts |
+| `AgentLint: Create CLAUDE.md from Template` | Scaffold a best-practices `CLAUDE.md` with 7 research-backed sections |
+| `AgentLint: Create SKILL.md from Template` | Generate an Agent Skill file with valid frontmatter |
+| `AgentLint: Create .claude/rules/ File` | Generate a path-scoped rule with glob pattern |
 
-For deep analysis, add your Anthropic API key:
+For deep analysis (Phase 2), add your Anthropic API key:
 
 ```json
 // .vscode/settings.json
@@ -74,68 +148,9 @@ For deep analysis, add your Anthropic API key:
 
 Or set the `ANTHROPIC_API_KEY` environment variable.
 
-### CLI
-
-```bash
-# Lint current directory
-npx agentlint
-
-# Lint a specific file
-npx agentlint CLAUDE.md
-
-# Auto-fix fixable issues
-npx agentlint --fix
-
-# Show readiness score
-npx agentlint --score
-
-# JSON output for scripting
-npx agentlint --format json
-
-# Errors only (suppress warnings/info)
-npx agentlint --quiet
-
-# Create a config file
-npx agentlint --init
-
-# List all 67 rules
-npx agentlint --list-rules
-```
-
-**Exit codes:** `0` no errors, `1` lint errors found, `2` fatal error.
-
-### GitHub Actions
-
-```yaml
-- uses: kcotias/agentlint@v1
-```
-
-Full example with all options:
-
-```yaml
-name: Lint Agent Instructions
-on: [push, pull_request]
-
-jobs:
-  agentlint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: kcotias/agentlint@v1
-        with:
-          path: '.'              # Directory to scan (default: repo root)
-          strict: 'false'        # Treat warnings as errors
-          score: 'true'          # Show readiness score
-          annotate: 'true'       # Inline PR annotations
-          config: ''             # Path to .agentlint.json
-          fail-on-warning: 'false'
-```
-
-The action outputs `score`, `errors`, `warnings`, and `total` for use in subsequent steps.
-
 ## Configuration
 
-Create a `.agentlint.json` in your project root (or run `npx agentlint --init`):
+Create a `.agentlint.json` in your project root:
 
 ```json
 {
@@ -163,71 +178,6 @@ In VS Code, you can also point to a specific config file:
 }
 ```
 
-## AI-Readiness Report
-
-Run **`AgentLint: AI-Readiness Report`** from the VS Code command palette, or use `npx agentlint --score` from the CLI:
-
-- **Score (0-100)** — bonus points for good practices, penalties for bad ones
-- **Maturity Level (L0-L6)** — from Absent to Adaptive
-- **Token Budget** — how many tokens your instruction files consume, per file
-- **Penalties Breakdown** — which issues are actively hurting your score
-- **Adoption Roadmap** — prioritized steps to improve, tailored to your current level
-
-A bloated, poorly-written CLAUDE.md scores **lower** than having no CLAUDE.md at all. The score rewards quality, not quantity.
-
-### Maturity Levels
-
-| Level | Name | What It Means |
-|-------|------|---------------|
-| L0 | Absent | No agent instruction files |
-| L1 | Basic | File exists, may need work |
-| L2 | Scoped | Uses RFC 2119 language (MUST, NEVER, ALWAYS) |
-| L3 | Structured | Multiple files split by concern |
-| L4 | Abstracted | Path-scoped rules via `.claude/rules/` |
-| L5 | Maintained | Comprehensive setup, regularly updated |
-| L6 | Adaptive | Agent Skills + dynamic loading + full ecosystem |
-
-## Cross-Tool Migration
-
-Switching to Claude Code? Run **`AgentLint: Migrate to CLAUDE.md`** to convert:
-
-- `.cursorrules` → `CLAUDE.md`
-- `.cursor/rules/*.mdc` → `CLAUDE.md`
-- `.github/copilot-instructions.md` → `CLAUDE.md`
-- `AGENTS.md` → `CLAUDE.md`
-
-AgentLint auto-categorizes your existing content into proper CLAUDE.md sections (Commands, Architecture, Constraints, Gotchas, Verification) and flags anything it can't classify for manual review.
-
-## Agent Context Export
-
-Run **`AgentLint: Export Agent Context`** to see exactly what your AI agent reads — every instruction file in Claude's load order, with token counts per file.
-
-- Files shown in **priority order** (project CLAUDE.md → scoped rules → local overrides → skills)
-- Each file tagged: always loaded, path-scoped, on-demand, or other-tool-only
-- Full content with token estimates and metadata extraction
-
-## Templates
-
-Start from best practices instead of a blank file:
-
-| Command | Creates |
-|---------|---------|
-| `AgentLint: Create CLAUDE.md from Template` | Skeleton with 7 research-backed sections |
-| `AgentLint: Create SKILL.md from Template` | Agent Skill with valid frontmatter and structure |
-| `AgentLint: Create .claude/rules/ File` | Path-scoped rule with glob pattern |
-
-## VS Code Commands
-
-| Command | Description |
-|---------|-------------|
-| `AgentLint: Analyze Current File` | Run full analysis on the active file |
-| `AgentLint: AI-Readiness Report` | Workspace-wide audit with score and roadmap |
-| `AgentLint: Migrate to CLAUDE.md` | Convert .cursorrules or other formats |
-| `AgentLint: Export Agent Context` | View all instruction files in load order |
-| `AgentLint: Create CLAUDE.md from Template` | Generate best-practices skeleton |
-| `AgentLint: Create SKILL.md from Template` | Generate Agent Skill file |
-| `AgentLint: Create .claude/rules/ File` | Generate path-scoped rule |
-
 ## VS Code Settings
 
 | Setting | Default | Description |
@@ -235,19 +185,6 @@ Start from best practices instead of a blank file:
 | `agentlint.anthropicApiKey` | `""` | Anthropic API key for deep analysis. Falls back to `ANTHROPIC_API_KEY` env var. |
 | `agentlint.model` | `claude-sonnet-4-20250514` | Claude model for deep analysis. |
 | `agentlint.configPath` | `""` | Path to `.agentlint.json` config file. Relative to workspace root. |
-
-## How It Works
-
-AgentLint activates automatically when you open a workspace containing agent instruction files. On every file open and edit (with 1s debounce):
-
-1. **Detects** the file type (CLAUDE.md, .cursorrules, SKILL.md, etc.)
-2. **Runs 67 local rules** across 15 categories — instant, free
-3. **Shows diagnostics** inline in the editor with severity icons
-4. **Offers quick-fixes** via the lightbulb menu
-5. **Optionally enriches** with Claude API deep analysis (if API key configured)
-6. **Updates the status bar** with file type and issue count
-
-The AI-Readiness Report scans your entire workspace, computes a weighted score with bonuses and penalties, determines your maturity level, and generates a prioritized adoption roadmap.
 
 ## Built On Research
 
@@ -258,6 +195,7 @@ AgentLint's rules aren't opinions — they're based on documented findings:
 - **Agent Skills specification** (agentskills.io) — progressive disclosure, token budgets, frontmatter requirements
 - **LLM instruction adherence research** — adherence degrades uniformly beyond recommended limits
 - **RFC 2119 keyword effectiveness** — MUST/NEVER/ALWAYS followed more reliably than hedging language
+- **ETH Zurich study** — auto-generated boilerplate decreases success rates by 2-3%
 
 ## License
 
