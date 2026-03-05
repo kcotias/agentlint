@@ -2,7 +2,7 @@
   "name": "agentlint",
   "displayName": "AgentLint",
   "description": "Lint AI agent instruction files — 67 rules, cost analysis, readiness scoring. Find broken rules AND cut token waste. Works with Claude, Cursor, Copilot.",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "publisher": "agentlint",
   "icon": "images/icon.png",
   "license": "MIT",
@@ -38,7 +38,14 @@
     "workspaceContains:**/CLAUDE.md",
     "workspaceContains:**/.cursorrules",
     "workspaceContains:**/SKILL.md",
-    "workspaceContains:**/AGENTS.md"
+    "workspaceContains:**/AGENTS.md",
+    "onCommand:agentlint.analyzeNow",
+    "onCommand:agentlint.aiReadiness",
+    "onCommand:agentlint.createClaudeMd",
+    "onCommand:agentlint.createSkillMd",
+    "onCommand:agentlint.createClaudeRules",
+    "onCommand:agentlint.migrateToClaudeMd",
+    "onCommand:agentlint.exportContext"
   ],
   "main": "./out/extension.js",
   "bin": {
