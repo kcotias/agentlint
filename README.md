@@ -4,6 +4,18 @@
 
 The first linter built specifically for AI agent instruction files. 67 rules catch vague language, security leaks, structural issues, and prompt anti-patterns — then cost analysis shows you exactly how much your context files cost per month and where to save. Works in VS Code and Cursor, across Claude Code, Cursor, and GitHub Copilot instruction files.
 
+## How AI-Ready Is Your Codebase?
+
+Find out in 5 seconds. Open the Command Palette (`Cmd+Shift+P`) and run:
+
+```
+AgentLint: AI-Readiness Report
+```
+
+You'll get an instant, comprehensive audit of your entire agent setup — a **0-100 readiness score**, your **maturity level** (L0–L6), a **dollar-per-month cost breakdown** of every instruction file, **concrete savings** you can action today, and a prioritized **adoption roadmap** showing exactly what to fix next. No API key needed.
+
+Whether you're just getting started with a `CLAUDE.md` or running a multi-tool setup with skills, rules, and hooks — this tells you exactly where you stand and what's costing you money.
+
 ## The Problem
 
 You write a 300-line CLAUDE.md. Claude ignores half of it. You don't know which half — but you're paying for all of it.

@@ -43,6 +43,7 @@ import {
 } from './reporter';
 import { scanReadiness } from '../readiness/core';
 import { renderReportMarkdown } from '../readiness/renderer';
+import { initAnalytics, track, flushAnalytics, getOrCreateCliDistinctId } from '../analytics';
 
 // ── Argument parsing ─────────────────────────────────────────────────────────
 
@@ -67,6 +68,8 @@ interface CliOptions {
   quiet: boolean;
   /** Create a .agentlint.json config file */
   init: boolean;
+  /** Disable telemetry for this run */
+  noTelemetry: boolean;
   /** Show help */
   help: boolean;
   /** Show version */
@@ -85,6 +88,7 @@ function parseArgs(argv: string[]): CliOptions {
     config: '',
     quiet: false,
     init: false,
+    noTelemetry: false,
     help: false,
     version: false,
   };
@@ -133,6 +137,9 @@ function parseArgs(argv: string[]): CliOptions {
         break;
       case '--init':
         opts.init = true;
+        break;
+      case '--no-telemetry':
+        opts.noTelemetry = true;
         break;
       case '--format':
       case '-f': {
@@ -197,6 +204,7 @@ function printHelp(): void {
     --quiet, -q           Show only errors (suppress warnings and info)
     --init                Create a .agentlint.json config file
     --list-rules          List all available rules
+    --no-telemetry        Disable anonymous usage analytics for this run
     -h, --help            Show this help message
     -v, --version         Show version number
 
@@ -291,15 +299,22 @@ function fatal(message: string): never {
   process.exit(2);
 }
 
+// ── CLI exit helper ──────────────────────────────────────────────────────────
+
+async function cliExit(code: number): Promise<never> {
+  await flushAnalytics();
+  process.exit(code);
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-function main(): void {
+async function main(): Promise<void> {
   // Parse args (skip `node` and script path)
   const rawArgs = process.argv.slice(2);
   const opts = parseArgs(rawArgs);
   const cwd = process.cwd();
 
-  // ── Quick exits ──────────────────────────────────────────────────────────
+  // ── Quick exits (before analytics init) ─────────────────────────────────
 
   if (opts.help) {
     printHelp();
@@ -310,6 +325,20 @@ function main(): void {
     process.stdout.write(`agentlint v${getVersion()}\n`);
     process.exit(0);
   }
+
+  // ── Analytics init ────────────────────────────────────────────────────────
+  const version = getVersion();
+  initAnalytics({
+    context: 'cli',
+    extensionVersion: version,
+    editorVersion: 'cli',
+    distinctId: getOrCreateCliDistinctId(),
+    isEnabled: () => {
+      if (opts.noTelemetry) return false;
+      if (process.env.DO_NOT_TRACK === '1') return false;
+      return true;
+    },
+  });
 
   if (opts.init) {
     const configPath = path.resolve(cwd, '.agentlint.json');
@@ -327,7 +356,8 @@ function main(): void {
     process.stdout.write(`  Created .agentlint.json in ${cwd}\n\n`);
     process.stdout.write(`  Edit this file to configure rule severities and per-file overrides.\n`);
     process.stdout.write(`  Run "agentlint --list-rules" to see all available rules.\n\n`);
-    process.exit(0);
+    track('cli_run', { subcommand: 'init', exit_code: 0 });
+    await cliExit(0);
   }
 
   // ── --report (runs before registerAllRules — core.ts handles its own registration) ─
@@ -338,7 +368,8 @@ function main(): void {
 
     if (discovered.length === 0) {
       process.stdout.write('\n  No agent instruction files found. Nothing to report.\n\n');
-      process.exit(0);
+      track('cli_run', { subcommand: 'report', files_found: 0, exit_code: 0 });
+      await cliExit(0);
     }
 
     const files = discovered.map((f) => ({
@@ -350,7 +381,13 @@ function main(): void {
     const report = scanReadiness({ rootDir, files, hasApiKey: !!process.env.ANTHROPIC_API_KEY });
     const markdown = renderReportMarkdown(report);
     process.stdout.write(markdown);
-    process.exit(0);
+    track('cli_run', {
+      subcommand: 'report',
+      files_found: files.length,
+      readiness_score: report.score,
+      exit_code: 0,
+    });
+    await cliExit(0);
   }
 
   // Register all rules (for lint mode, not report mode)
@@ -369,7 +406,8 @@ function main(): void {
       fixable: r.meta.fixable,
     }));
     process.stdout.write(formatRuleList(ruleInfos));
-    process.exit(0);
+    track('cli_run', { subcommand: 'list-rules', exit_code: 0 });
+    await cliExit(0);
   }
 
   // ── Resolve targets ──────────────────────────────────────────────────────
@@ -417,7 +455,8 @@ function main(): void {
     } else {
       process.stdout.write('\n  No agent instruction files found.\n\n');
     }
-    process.exit(0);
+    track('cli_run', { subcommand: 'lint', format: opts.format, files_linted: 0, exit_code: 0 });
+    await cliExit(0);
   }
 
   // ── Load config ──────────────────────────────────────────────────────────
@@ -503,17 +542,26 @@ function main(): void {
 
   const summary = computeSummary(results);
 
-  if (summary.errors > 0) {
-    process.exit(1);
-  }
+  const exitCode = summary.errors > 0 ? 1 : (opts.strict && summary.warnings > 0 ? 1 : 0);
 
-  if (opts.strict && summary.warnings > 0) {
-    process.exit(1);
-  }
+  track('cli_run', {
+    subcommand: 'lint',
+    format: opts.format,
+    fix: opts.fix,
+    strict: opts.strict,
+    files_linted: filesToLint.length,
+    total_errors: summary.errors,
+    total_warnings: summary.warnings,
+    fixes_applied: totalFixesApplied,
+    exit_code: exitCode,
+  });
 
-  process.exit(0);
+  await cliExit(exitCode);
 }
 
 // ── Run ──────────────────────────────────────────────────────────────────────
 
-main();
+main().catch((err) => {
+  process.stderr.write(`agentlint: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.exit(2);
+});

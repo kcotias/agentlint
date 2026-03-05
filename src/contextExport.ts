@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { AgentFileType } from './types';
+import { track } from './analytics';
 
 /**
  * Export Agent Context: Shows EXACTLY what Claude sees when it loads your
@@ -119,6 +120,13 @@ export async function exportAgentContext(): Promise<void> {
     `AgentLint: Exported ${contextFiles.length} agent files (~${totalTokens.toLocaleString()} tokens). ` +
     `Claude loads ~${claudeTokens.toLocaleString()} tokens from ${claudeFiles.length} files.`
   );
+
+  track('context_exported', {
+    total_files: contextFiles.length,
+    total_tokens: totalTokens,
+    claude_files: claudeFiles.length,
+    claude_tokens: claudeTokens,
+  });
 }
 
 function renderContextExport(files: ContextFile[], rootPath: string): string {

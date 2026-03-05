@@ -3,6 +3,9 @@ import * as vscode from 'vscode';
 /**
  * CodeActionProvider for AgentLint quick-fixes.
  * Provides lightbulb actions for fixable diagnostics.
+ *
+ * Quick-fixes use the `agentlint._applyQuickFix` command wrapper
+ * (registered in extension.ts) so we can track usage analytics.
  */
 export class AgentLintCodeActionProvider implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
@@ -58,7 +61,21 @@ export class AgentLintCodeActionProvider implements vscode.CodeActionProvider {
       }
     }
 
-    return actions;
+    // Detect file type for tracking
+    const filePath = document.uri.fsPath;
+    const basename = filePath.toLowerCase();
+    let fileType = 'unknown';
+    if (basename.endsWith('claude.md')) fileType = 'claude-md';
+    else if (basename.endsWith('.cursorrules') || basename.endsWith('.mdc')) fileType = 'cursorrules';
+    else if (basename.endsWith('skill.md')) fileType = 'skill-md';
+    else if (basename.endsWith('agents.md')) fileType = 'agents-md';
+    else if (basename.endsWith('copilot-instructions.md')) fileType = 'copilot-instructions';
+
+    // Wrap all actions with tracking
+    return actions.map((action) => {
+      const code = action.diagnostics?.[0]?.code;
+      return this.wrapWithTracking(action, String(code ?? 'unknown'), fileType);
+    });
   }
 
   private createHedgingFixes(document: vscode.TextDocument, diagnostic: vscode.Diagnostic): vscode.CodeAction[] {
@@ -224,6 +241,28 @@ export class AgentLintCodeActionProvider implements vscode.CodeActionProvider {
     const action = new vscode.CodeAction(`AgentLint: ${title}`, vscode.CodeActionKind.QuickFix);
     action.diagnostics = [diagnostic];
     // No edit — just an informational suggestion
+    return action;
+  }
+
+  /**
+   * Wrap a CodeAction's edit with the tracking command so quickfix usage
+   * is tracked via analytics. If the action has no edit, returns it unchanged.
+   */
+  private wrapWithTracking(
+    action: vscode.CodeAction,
+    ruleCode: string,
+    fileType: string
+  ): vscode.CodeAction {
+    if (action.edit) {
+      const edit = action.edit;
+      action.command = {
+        command: 'agentlint._applyQuickFix',
+        title: action.title,
+        arguments: [edit, ruleCode, fileType],
+      };
+      // Remove direct edit — the command will apply it
+      action.edit = undefined;
+    }
     return action;
   }
 }

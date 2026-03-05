@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { track } from './analytics';
 
 /**
  * Template generator for CLAUDE.md files.
@@ -136,6 +137,8 @@ export async function createClaudeMdTemplate(): Promise<void> {
   vscode.window.showInformationMessage(
     'AgentLint: Created CLAUDE.md from best-practices template. Fill in the [placeholders]!'
   );
+
+  track('template_created', { template_type: 'claude-md' });
 }
 
 export async function createSkillMdTemplate(): Promise<void> {
@@ -187,6 +190,8 @@ export async function createSkillMdTemplate(): Promise<void> {
   vscode.window.showInformationMessage(
     `AgentLint: Created ${skillName}/SKILL.md from template. Fill in the instructions!`
   );
+
+  track('template_created', { template_type: 'skill-md' });
 }
 
 export async function createClaudeRulesTemplate(): Promise<void> {
@@ -221,4 +226,6 @@ export async function createClaudeRulesTemplate(): Promise<void> {
   vscode.window.showInformationMessage(
     `AgentLint: Created .claude/rules/${ruleName}.md — set the glob pattern and add your rules!`
   );
+
+  track('template_created', { template_type: 'claude-rules' });
 }

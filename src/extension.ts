@@ -11,6 +11,7 @@ import { exportAgentContext } from './contextExport';
 import { AgentFileType, AgentFileInfo } from './types';
 import { AgentLintConfig } from './config/types';
 import { loadConfig, loadConfigFromFile } from './config/loader';
+import { initAnalytics, track, disposeAnalytics } from './analytics';
 
 // ── File detection ───────────────────────────────────────────────────────────
 
@@ -98,7 +99,7 @@ function debounceAnalysis(document: vscode.TextDocument, delayMs: number = 1000)
   // Set a new timer
   const timer = setTimeout(() => {
     analysisTimers.delete(key);
-    runAnalysis(document);
+    runAnalysis(document, 'change');
   }, delayMs);
 
   analysisTimers.set(key, timer);
@@ -157,7 +158,7 @@ function setStatusBar(text: string, tooltip?: string): void {
 
 // ── Analysis runner ──────────────────────────────────────────────────────────
 
-async function runAnalysis(document: vscode.TextDocument): Promise<void> {
+async function runAnalysis(document: vscode.TextDocument, trigger: string = 'unknown'): Promise<void> {
   const fileInfo = detectAgentFile(document.uri.fsPath);
   if (!fileInfo) {
     return;
@@ -209,6 +210,15 @@ async function runAnalysis(document: vscode.TextDocument): Promise<void> {
       `${icon} AgentLint [${fileInfo.label}]: ${localCount} issue${localCount !== 1 ? 's' : ''} (local only, ${apiStatus})`,
       `AgentLint local analysis complete. Configure an API key for deeper analysis.`
     );
+
+    track('file_analyzed', {
+      file_type: fileInfo.type,
+      trigger,
+      local_issues: localCount,
+      total_issues: localCount,
+      has_api_key: !!hasKey,
+      phase2_ran: false,
+    });
     return;
   }
 
@@ -227,6 +237,17 @@ async function runAnalysis(document: vscode.TextDocument): Promise<void> {
     `${icon} AgentLint [${fileInfo.label}]: ${totalCount} issue${totalCount !== 1 ? 's' : ''}${scoreText}`,
     `AgentLint analysis complete. Score: ${result.score ?? 'n/a'}. ${localCount} local + ${result.issues.length} Claude issues.`
   );
+
+  track('file_analyzed', {
+    file_type: fileInfo.type,
+    trigger,
+    local_issues: localCount,
+    llm_issues: result.issues.length,
+    total_issues: totalCount,
+    score: result.score,
+    has_api_key: true,
+    phase2_ran: true,
+  });
 }
 
 /**
@@ -268,6 +289,25 @@ export function activate(context: vscode.ExtensionContext): void {
   statusBarItem.command = 'agentlint.analyzeNow';
   context.subscriptions.push(statusBarItem);
 
+  // ── Analytics init ────────────────────────────────────────────────────
+  const extensionPkg = context.extension?.packageJSON;
+  initAnalytics({
+    context: 'vscode',
+    extensionVersion: extensionPkg?.version ?? '0.0.0',
+    editorVersion: vscode.version,
+    globalState: context.globalState,
+    isEnabled: () => {
+      // Respect VS Code global telemetry setting
+      if (vscode.env.isTelemetryEnabled === false) {
+        return false;
+      }
+      // Respect AgentLint-specific telemetry setting
+      const agentlintConfig = vscode.workspace.getConfiguration('agentlint');
+      return agentlintConfig.get<boolean>('telemetry', true);
+    },
+  });
+  track('extension_activated');
+
   // ── Config loading ──────────────────────────────────────────────────────
   reloadConfig();
 
@@ -279,19 +319,19 @@ export function activate(context: vscode.ExtensionContext): void {
     reloadConfig();
     // Re-analyze open agent files with the updated config
     if (vscode.window.activeTextEditor) {
-      runAnalysis(vscode.window.activeTextEditor.document);
+      runAnalysis(vscode.window.activeTextEditor.document, 'config_change');
     }
   });
   configWatcher.onDidCreate(() => {
     reloadConfig();
     if (vscode.window.activeTextEditor) {
-      runAnalysis(vscode.window.activeTextEditor.document);
+      runAnalysis(vscode.window.activeTextEditor.document, 'config_change');
     }
   });
   configWatcher.onDidDelete(() => {
     reloadConfig();
     if (vscode.window.activeTextEditor) {
-      runAnalysis(vscode.window.activeTextEditor.document);
+      runAnalysis(vscode.window.activeTextEditor.document, 'config_change');
     }
   });
   context.subscriptions.push(configWatcher);
@@ -322,31 +362,36 @@ export function activate(context: vscode.ExtensionContext): void {
   const analyzeCommand = vscode.commands.registerCommand('agentlint.analyzeNow', () => {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-      runAnalysis(editor.document);
+      track('command_executed', { command: 'analyzeNow' });
+      runAnalysis(editor.document, 'command');
     }
   });
   context.subscriptions.push(analyzeCommand);
 
   // Command: Create CLAUDE.md from template
   const createClaudeMdCmd = vscode.commands.registerCommand('agentlint.createClaudeMd', () => {
+    track('command_executed', { command: 'createClaudeMd' });
     createClaudeMdTemplate();
   });
   context.subscriptions.push(createClaudeMdCmd);
 
   // Command: Create SKILL.md from template
   const createSkillMdCmd = vscode.commands.registerCommand('agentlint.createSkillMd', () => {
+    track('command_executed', { command: 'createSkillMd' });
     createSkillMdTemplate();
   });
   context.subscriptions.push(createSkillMdCmd);
 
   // Command: Create .claude/rules/ file from template
   const createRulesCmd = vscode.commands.registerCommand('agentlint.createClaudeRules', () => {
+    track('command_executed', { command: 'createClaudeRules' });
     createClaudeRulesTemplate();
   });
   context.subscriptions.push(createRulesCmd);
 
   // Command: AI-Readiness Report
   const readinessCmd = vscode.commands.registerCommand('agentlint.aiReadiness', async () => {
+    track('command_executed', { command: 'aiReadiness' });
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -369,6 +414,17 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.showInformationMessage(
           `${emoji} AI-Readiness: ${report.score}/100 — L${report.maturity.level} ${report.maturity.label} — ${report.roadmap.length} steps to improve`
         );
+
+        const grade = report.score >= 90 ? 'A' : report.score >= 80 ? 'B' : report.score >= 70 ? 'C' : report.score >= 50 ? 'D' : 'F';
+        track('readiness_report_generated', {
+          score: report.score,
+          grade,
+          maturity_level: report.maturity.level,
+          maturity_label: report.maturity.label,
+          total_files: report.files.length,
+          total_tokens: report.files.reduce((sum: number, f: { estimatedTokens: number }) => sum + f.estimatedTokens, 0),
+          roadmap_steps: report.roadmap.length,
+        });
       }
     );
   });
@@ -376,12 +432,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Command: Migrate to CLAUDE.md
   const migrateCmd = vscode.commands.registerCommand('agentlint.migrateToClaudeMd', () => {
+    track('command_executed', { command: 'migrateToClaudeMd' });
     migrateToClaudeMd();
   });
   context.subscriptions.push(migrateCmd);
 
   // Command: Export Agent Context
   const exportContextCmd = vscode.commands.registerCommand('agentlint.exportContext', () => {
+    track('command_executed', { command: 'exportContext' });
     exportAgentContext();
   });
   context.subscriptions.push(exportContextCmd);
@@ -399,13 +457,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Trigger on save
   const onSave = vscode.workspace.onDidSaveTextDocument((document) => {
-    runAnalysis(document);
+    runAnalysis(document, 'save');
   });
   context.subscriptions.push(onSave);
 
   // Trigger on file open
   const onOpen = vscode.workspace.onDidOpenTextDocument((document) => {
-    runAnalysis(document);
+    runAnalysis(document, 'open');
   });
   context.subscriptions.push(onOpen);
 
@@ -417,7 +475,7 @@ export function activate(context: vscode.ExtensionContext): void {
         setStatusBar(`$(eye) AgentLint [${fileInfo.label}]: Ready`);
         // Run analysis if no diagnostics exist yet
         if (!diagnosticCollection.has(editor.document.uri)) {
-          runAnalysis(editor.document);
+          runAnalysis(editor.document, 'editor_change');
         }
       } else {
         statusBarItem.hide();
@@ -432,11 +490,21 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   context.subscriptions.push(onClose);
 
+  // Register quickfix tracking wrapper command
+  const quickfixCmd = vscode.commands.registerCommand(
+    'agentlint._applyQuickFix',
+    async (edit: vscode.WorkspaceEdit, ruleCode: string, fileType: string) => {
+      await vscode.workspace.applyEdit(edit);
+      track('quickfix_applied', { rule_code: ruleCode, file_type: fileType });
+    }
+  );
+  context.subscriptions.push(quickfixCmd);
+
   // Analyze any already-open target files
   if (vscode.window.activeTextEditor) {
     const doc = vscode.window.activeTextEditor.document;
     if (detectAgentFile(doc.uri.fsPath)) {
-      runAnalysis(doc);
+      runAnalysis(doc, 'activate');
     }
   }
 }
@@ -447,4 +515,7 @@ export function deactivate(): void {
     clearTimeout(timer);
   }
   analysisTimers.clear();
+
+  // Flush remaining analytics events
+  disposeAnalytics();
 }

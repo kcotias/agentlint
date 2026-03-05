@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { AgentFileType, AnalysisResult, PromptIssue } from './types';
 import { buildMetaPrompt } from './metaPrompt';
+import { track } from './analytics';
 
 // Lazy-load the Anthropic SDK so the extension activates even when
 // node_modules aren't bundled (e.g., VSIX without a bundler).
@@ -77,10 +78,20 @@ export async function analyzeDocument(
 ): Promise<AnalysisResult | undefined> {
   const log = getOutputChannel();
 
+  const startTime = Date.now();
+
   // Check cache
   const cached = cache.get(filePath);
   if (cached && cached.content === content) {
     log.appendLine(`[cache hit] ${filePath}`);
+    track('deep_analysis_run', {
+      model: getModel(),
+      success: true,
+      cached: true,
+      duration_ms: Date.now() - startTime,
+      issue_count: cached.result.issues.length,
+      score: cached.result.score,
+    });
     return cached.result;
   }
 
@@ -148,10 +159,25 @@ export async function analyzeDocument(
 
     cache.set(filePath, { content, result });
     log.appendLine(`[analysis] ${filePath}: ${validIssues.length} issues, score=${result.score ?? 'n/a'}`);
+    track('deep_analysis_run', {
+      model,
+      success: true,
+      cached: false,
+      duration_ms: Date.now() - startTime,
+      issue_count: validIssues.length,
+      score: result.score,
+    });
     return result;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     log.appendLine(`[error] Analysis failed for ${filePath}: ${message}`);
+    track('deep_analysis_run', {
+      model,
+      success: false,
+      cached: false,
+      duration_ms: Date.now() - startTime,
+      error_type: err instanceof Error ? err.constructor.name : 'unknown',
+    });
     return undefined;
   }
 }

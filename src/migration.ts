@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { track } from './analytics';
 
 /**
  * Cross-tool migration: Convert agent instruction files between formats.
@@ -385,6 +386,13 @@ export async function migrateToClaudeMd(): Promise<void> {
     `AgentLint: Migrated ${source.label} → CLAUDE.md! ` +
       `${categorizedCount} lines auto-categorized, ${uncatCount} lines need manual review.`
   );
+
+  track('migration_run', {
+    source_type: source.type,
+    mode: 'create',
+    lines_categorized: categorizedCount,
+    lines_uncategorized: uncatCount,
+  });
 }
 
 async function mergeIntoClaudeMd(
@@ -410,4 +418,9 @@ async function mergeIntoClaudeMd(
   vscode.window.showInformationMessage(
     `AgentLint: Merged ${source.label} into CLAUDE.md. Review the merged content and reorganize as needed.`
   );
+
+  track('migration_run', {
+    source_type: source.type,
+    mode: 'merge',
+  });
 }
